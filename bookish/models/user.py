@@ -10,11 +10,13 @@ class Users(db.Model):
     name = db.Column(db.String(80), nullable=False)
     password = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(80), nullable=False, unique=True)
+    token = db.Column(db.String(80))
 
-    def __init__(self, name, password, email):
+    def __init__(self, name, password, email, token=None):
         self.name = name
         self.password = password
         self.email = email
+        self.token = token
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
