@@ -1,6 +1,8 @@
 from flask import request
 from bookish.models.example import Example
 from bookish.models.user import Users
+from bookish.models.book import Books
+from bookish.models.borrowed_book import Borrowed_books
 from bookish.models import db, user
 
 import bcrypt
@@ -60,9 +62,9 @@ def bookish_routes(app):
             users = Users.query.all()
             results = [{
                     'id': user.id,
-                    'Name': user.name,
-                    'Password': user.password,
-                    'Email': user.email
+                    'name': user.name,
+                    'password': user.password,
+                    'email': user.email
                 } for user in users]
 
             return {"users": results}
@@ -71,4 +73,26 @@ def bookish_routes(app):
         else:
             return {"error": "Method not allowed"}
 
+    @app.route('/books', methods=['POST', 'GET'])
+    def handle_books():
+        if request.method == 'POST':
+            if request.is_json:
+                data = request.get_json()
+                new_book = Books(ISBN=data['ISBN'], title=data['title'], author=data['author'],
+                                 copies_available=data['copies_available'], copies_total=data['copies_total'])
+                db.session.add(new_book)
+                db.session.commit()
+                return {"message": "New book has been created successfully."}
+            else:
+                return {"error": "The request payload is not in JSON format"}
 
+        elif request.method == 'GET':
+            books = Books.query.all()
+            results = [{
+                    'ISBN': book.ISBN,
+                    'title': book.title,
+                    'author': book.author,
+                    'copies_available': book.copies_available,
+                    'copies_total': book.copies_total
+                } for book in books]
+            return {"books": results}
