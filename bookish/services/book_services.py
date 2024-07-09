@@ -2,6 +2,7 @@ from bookish.models import db
 from bookish.models.book import Books
 from bookish.models.borrowed_book import Borrowed_books
 from bookish.models.user import Users
+from bookish.services.error_handlers import *
 
 
 def add_book(data):
@@ -10,10 +11,11 @@ def add_book(data):
     db.session.add(new_book)
     db.session.commit()
 
+
 def get_books():
     books = Books.query.all()
     if len(books) == 0:
-        return {"error": "No books found"}
+        raise BookNotFound()
     results = [{
         'ISBN': book.ISBN,
         'title': book.title,
@@ -23,21 +25,23 @@ def get_books():
     } for book in books]
     return {"books": results}
 
+
+def find_book(ISBN):
+    return Books.query.filter_by(ISBN=ISBN).first().serialize()
+
+
 def get_borrowed_books(request):
     user_token = request.headers.get('Authorization')
-
-    if not user_token:
-        return {"error": "User is not logged in"}
 
     user = Users.query.filter_by(token=user_token).first()
 
     if not user:
-        return {"error": "User does not exist"}
+        raise UserNotFound()
 
     borrowed_books = Borrowed_books.query.filter_by(user_id=user.id)
 
     if not borrowed_books:
-        return {"message": "No borrowed books found"}
+        raise BookNotFound()
 
     books = [(Books.query.get(book.book_ISBN), book.due_date) for book in borrowed_books]
     results = [{
@@ -50,27 +54,25 @@ def get_borrowed_books(request):
     } for book in books]
     return {"books": results}
 
+
 def borrow_book(request):
     data = request.get_json()
 
     user_token = request.headers.get('Authorization')
 
-    if not user_token:
-        return {"error": "User is not logged in"}
-
     user = Users.query.filter_by(token=user_token).first()
 
     if not user:
-        return {"error": "User does not exist"}
+        raise UserNotFound()
 
     borrowed_book = Borrowed_books.query.filter_by(user_id=user.id).filter_by(book_ISBN=data['book_ISBN']).first()
     if borrowed_book:
-        return {"error": "Book already borrowed"}
+        raise BookAlreadyBorrowed()
 
     book = Books.query.get(data['book_ISBN'])
 
     if book.copies_available <= 0:
-        return {"error": "No available copies"}
+        raise NoAvailableCopies()
 
     book.copies_available -= 1
     db.session.commit()
@@ -81,3 +83,45 @@ def borrow_book(request):
 
     return {"message": "User has borrowed book successfully."}
 
+
+def turn_in_book(request):
+    data = request.get_json()
+
+    user_token = request.headers.get('Authorization')
+
+    user = Users.query.filter_by(token=user_token).first()
+
+    if not user:
+        raise UserNotFound()
+
+    borrowed_book = Borrowed_books.query.filter_by(user_id=user.id).filter_by(book_ISBN=data['book_ISBN']).first()
+    if not borrowed_book:
+        raise BookNotBorrowed()
+
+    book = Books.query.get(data['book_ISBN'])
+
+    book.copies_available += 1
+
+    db.session.delete(borrowed_book)
+    db.session.commit()
+
+    return {"message": "User has borrowed book successfully."}
+
+def delete_book(request):
+    data = request.get_json()
+
+    book = Books.query.get(data['ISBN'])
+
+    if not book:
+        raise BookNotFound()
+
+    borrowed_books = Borrowed_books.query.filter_by(book_ISBN=data['ISBN'])
+
+    for borrowed_book in borrowed_books:
+        db.session.delete(borrowed_book)
+        db.session.commit()
+
+    db.session.delete(book)
+    db.session.commit()
+
+    return {"message": "Book deleted successfully."}

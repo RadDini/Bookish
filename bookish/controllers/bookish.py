@@ -1,6 +1,7 @@
 from flask import request
-from bookish.models.example import Example
+
 from bookish.models import db
+from bookish.models.example import Example
 
 
 def bookish_routes(app):

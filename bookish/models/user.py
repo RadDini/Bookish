@@ -11,6 +11,7 @@ class Users(db.Model):
     password = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(80), nullable=False, unique=True)
     token = db.Column(db.String(80))
+    is_admin = db.Column(db.Boolean, default=False)
 
     def __init__(self, name, password, email, token=None):
         self.name = name
