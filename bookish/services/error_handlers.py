@@ -40,6 +40,34 @@ class BookNotBorrowed(werkzeug.exceptions.HTTPException):
     code = 404
     description = 'Book is not borrowed.'
 
+
 class PermissionDenied(werkzeug.exceptions.HTTPException):
     code = 404
     description = 'User is not admin.'
+
+
+class MissingField(werkzeug.exceptions.HTTPException):
+    code = 400
+    description = 'Field is missing.'
+
+    def __init__(self, missing_fields):
+        self.missing_fields = missing_fields
+
+
+def missing_field_handler(e):
+    ret = ""
+
+    for field in e.missing_fields:
+        ret += "Missing field '{}'\n".format(field)
+
+    return ret
+
+
+def verify_fields(data, fields):
+    missing_fields = []
+    for field in fields:
+        if field not in data:
+            missing_fields.append(field)
+
+    if len(missing_fields) > 0:
+        raise MissingField(missing_fields)

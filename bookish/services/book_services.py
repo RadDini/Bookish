@@ -1,3 +1,5 @@
+import werkzeug
+
 from bookish.models import db
 from bookish.models.book import Books
 from bookish.models.borrowed_book import Borrowed_books
@@ -6,16 +8,34 @@ from bookish.services.error_handlers import *
 
 
 def add_book(data):
+    verify_fields(data, ['ISBN', 'title', 'author', 'copies_available', 'copies_total'])
+
     new_book = Books(ISBN=data['ISBN'], title=data['title'], author=data['author'],
                      copies_available=data['copies_available'], copies_total=data['copies_total'])
     db.session.add(new_book)
     db.session.commit()
 
 
-def get_books():
+def get_books(order=None, limit=None):
     books = Books.query.all()
     if len(books) == 0:
         raise BookNotFound()
+
+    if order is not None:
+        if order.lower() == 'asc':
+            books.sort(key=lambda b: b.title)
+        elif order.lower() == 'desc':
+            books.sort(key=lambda b: b.title, reverse=True)
+        else:
+            raise NotImplemented
+
+    if limit is not None:
+        try:
+            limit = int(limit)
+            books = books[0:limit]
+        except ValueError:
+            raise werkzeug.exceptions.BadRequest
+
     results = [{
         'ISBN': book.ISBN,
         'title': book.title,
@@ -23,6 +43,7 @@ def get_books():
         'copies_available': book.copies_available,
         'copies_total': book.copies_total,
     } for book in books]
+
     return {"books": results}
 
 
@@ -65,6 +86,8 @@ def borrow_book(request):
     if not user:
         raise UserNotFound()
 
+    verify_fields(data, ['book_ISBN'])
+
     borrowed_book = Borrowed_books.query.filter_by(user_id=user.id).filter_by(book_ISBN=data['book_ISBN']).first()
     if borrowed_book:
         raise BookAlreadyBorrowed()
@@ -94,6 +117,8 @@ def turn_in_book(request):
     if not user:
         raise UserNotFound()
 
+    verify_fields(data, ['book_ISBN'])
+
     borrowed_book = Borrowed_books.query.filter_by(user_id=user.id).filter_by(book_ISBN=data['book_ISBN']).first()
     if not borrowed_book:
         raise BookNotBorrowed()
@@ -107,8 +132,11 @@ def turn_in_book(request):
 
     return {"message": "User has borrowed book successfully."}
 
+
 def delete_book(request):
     data = request.get_json()
+
+    verify_fields(data, ['ISBN'])
 
     book = Books.query.get(data['ISBN'])
 

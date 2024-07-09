@@ -1,10 +1,11 @@
 from flask import request
+
 from bookish.services.book_services import *
-from bookish.services.user_services import find_user
 from bookish.services.error_handlers import *
+from bookish.services.user_services import find_user
+
 
 def book_routes(app):
-
     @app.route('/books', methods=['POST', 'GET'])
     def handle_books():
         if request.method == 'POST':
@@ -16,11 +17,9 @@ def book_routes(app):
                 return {"message": "New book has been created successfully."}
             else:
                 raise WrongFormat()
-
-
         elif request.method == 'GET':
 
-            return get_books()
+            return get_books(order=request.args.get('order'), limit=request.args.get('limit'))
 
     @app.route('/book/<string:ISBN>', methods=['GET'])
     def handle_book(ISBN):
@@ -76,4 +75,3 @@ def book_routes(app):
             return delete_book(request), 200
         else:
             raise WrongFormat()
-

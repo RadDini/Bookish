@@ -1,11 +1,10 @@
 import os
-from flask import Flask
-from bookish.models import db, migrate
-from bookish.controllers import register_controllers
-from bookish.services.error_handlers import *
-from bookish.models.user import Users
-from bookish.services.user_services import encrypt_password
 
+from flask import Flask
+
+from bookish.controllers import register_controllers
+from bookish.models import db, migrate
+from bookish.services.error_handlers import *
 
 
 def create_app():
@@ -26,8 +25,7 @@ def create_app():
     app.register_error_handler(BookAlreadyBorrowed, lambda x: x)
     app.register_error_handler(NoAvailableCopies, lambda x: x)
     app.register_error_handler(BookNotBorrowed, lambda x: x)
-
-
+    app.register_error_handler(MissingField, missing_field_handler)
 
     if __name__ == "__main__":
         app.run()

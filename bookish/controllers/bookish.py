@@ -7,7 +7,7 @@ from bookish.models.example import Example
 def bookish_routes(app):
     @app.route('/healthcheck')
     def health_check():
-        return {"status": "OK vreau acasa"}
+        return {"status": "OK"}
 
     @app.route('/example', methods=['POST', 'GET'])
     def handle_example():

@@ -33,6 +33,7 @@ def update_token(user, data):
 
     return token_str
 
+
 def get_users():
     users = Users.query.all()
     return [{
@@ -42,7 +43,9 @@ def get_users():
         'email': user.email
     } for user in users]
 
+
 def login(data):
+    verify_fields(data, ['email', 'password'])
     user = Users.query.filter_by(email=data['email']).first()
 
     if not user:
@@ -53,6 +56,7 @@ def login(data):
 
     return user
 
+
 def remove_token(user_token):
     user = Users.query.filter_by(token=user_token).first()
 
@@ -62,6 +66,7 @@ def remove_token(user_token):
     user.token = None
     db.session.commit()
 
+
 def find_user(user_token):
     user = Users.query.filter_by(token=user_token).first()
 
@@ -70,8 +75,11 @@ def find_user(user_token):
 
     return user
 
+
 def delete_user(request):
     data = request.get_json()
+
+    verify_fields(data, ['id'])
 
     user = Users.query.get(data['id'])
 
@@ -81,7 +89,6 @@ def delete_user(request):
     borrowed_books = Borrowed_books.query.filter_by(user_id=data['id'])
 
     for borrowed_book in borrowed_books:
-
         book = Books.query.filter_by(ISBN=borrowed_book.book_ISBN).first()
 
         book.copies_available += 1
