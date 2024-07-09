@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import {HomeDiv, HomeTitleContainer, HomeTitleTag,} from "./HomeComponents";
+import {Container} from "reactstrap";
 
 export class HomePage extends Component {
     render() {
@@ -10,6 +11,7 @@ export class HomePage extends Component {
                     <li>{this.props.okStatus}!</li>
                 </HomeTitleContainer>
             </HomeDiv>
+
         );
     }
 }

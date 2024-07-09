@@ -13,6 +13,17 @@ export class ApiService {
                 .catch((error) => console.error(error))
         );
     }
+
+    getUsers() {
+        return new Promise((resolve) =>
+            fetch("/get_users", {
+                method: "GET",
+            })
+                .then((response) => checkResponse(response))
+                .then((response) => resolve(response.json()))
+                .catch((error) => console.error(error))
+        );
+    }
 }
 
 const checkResponse = (response) => {

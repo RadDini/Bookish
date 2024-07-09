@@ -58,9 +58,9 @@ def missing_field_handler(e):
     ret = ""
 
     for field in e.missing_fields:
-        ret += "Missing field '{}'\n".format(field)
+        ret += "Missing field: " + field + "\n"
 
-    return ret
+    return werkzeug.exceptions.UnprocessableEntity(description=ret)
 
 
 def verify_fields(data, fields):

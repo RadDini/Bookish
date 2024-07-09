@@ -2,8 +2,9 @@ import os
 
 from flask import Flask
 
-from bookish.controllers import register_controllers
 from bookish.models import db, migrate
+from bookish.controllers import register_controllers
+
 from bookish.services.error_handlers import *
 
 
