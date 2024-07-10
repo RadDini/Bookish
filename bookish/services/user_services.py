@@ -1,5 +1,8 @@
 import bcrypt
 import jwt
+import werkzeug
+
+from flask import jsonify
 
 from bookish.models import db
 from bookish.models.book import Books
@@ -20,6 +23,12 @@ def encrypt_password(password):
 
 def add_user(name, password, email):
     new_user = Users(name=name, password=password, email=email)
+
+    user = Users.query.filter_by(email=email).first()
+
+    if user:
+        raise werkzeug.exceptions.BadRequest('User already exists')
+
     db.session.add(new_user)
     db.session.commit()
 
@@ -31,17 +40,14 @@ def update_token(user, data):
     user.token = token_str
     db.session.commit()
 
-    return token_str
+    return jsonify("user logged in succesfully", token_str)
 
 
 def get_users():
     users = Users.query.all()
-    return [{
-        'id': user.id,
-        'name': user.name,
-        'password': user.password,
-        'email': user.email
-    } for user in users]
+    if users is None:
+        raise werkzeug.exceptions.NotFound("No users found")
+    return jsonify(users)
 
 
 def login(data):
@@ -49,10 +55,10 @@ def login(data):
     user = Users.query.filter_by(email=data['email']).first()
 
     if not user:
-        raise UserNotFound()
+        raise werkzeug.exceptions.NotFound("User not found")
 
     if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
-        raise InvalidCredentials()
+        raise werkzeug.exceptions.Unauthorized("Invalid password")
 
     return user
 
@@ -61,17 +67,19 @@ def remove_token(user_token):
     user = Users.query.filter_by(token=user_token).first()
 
     if not user:
-        raise UserNotLoggedIn()
+        raise werkzeug.exceptions.Unauthorized("User not logged in")
 
     user.token = None
     db.session.commit()
+
+    return jsonify("User logged out successfully")
 
 
 def find_user(user_token):
     user = Users.query.filter_by(token=user_token).first()
 
     if not user:
-        raise UserNotFound()
+        raise werkzeug.exceptions.NotFound("User not found")
 
     return user
 
@@ -84,7 +92,7 @@ def delete_user(request):
     user = Users.query.get(data['id'])
 
     if not user:
-        raise UserNotFound()
+        raise werkzeug.exceptions.NotFound("User not found")
 
     borrowed_books = Borrowed_books.query.filter_by(user_id=data['id'])
 
@@ -98,4 +106,4 @@ def delete_user(request):
     db.session.delete(user)
     db.session.commit()
 
-    return {"message": "User deleted successfully."}
+    return jsonify("User deleted successfully.", user.name)

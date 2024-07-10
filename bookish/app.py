@@ -18,15 +18,6 @@ def create_app():
     migrate.init_app(app, db)
 
     register_controllers(app)
-    app.register_error_handler(WrongFormat, lambda x: x)
-    app.register_error_handler(UserNotFound, lambda x: x)
-    app.register_error_handler(InvalidCredentials, lambda x: x)
-    app.register_error_handler(UserNotLoggedIn, lambda x: x)
-    app.register_error_handler(BookNotFound, lambda x: x)
-    app.register_error_handler(BookAlreadyBorrowed, lambda x: x)
-    app.register_error_handler(NoAvailableCopies, lambda x: x)
-    app.register_error_handler(BookNotBorrowed, lambda x: x)
-    app.register_error_handler(MissingField, missing_field_handler)
 
     if __name__ == "__main__":
         app.run()

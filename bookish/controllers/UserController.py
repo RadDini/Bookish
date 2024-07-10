@@ -1,4 +1,5 @@
 from flask import request
+import werkzeug
 
 from bookish.services.user_services import *
 
@@ -15,7 +16,7 @@ def user_routes(app):
 
             return {"message": "New user has been created successfully."}
         else:
-            raise WrongFormat()
+            raise werkzeug.exceptions.UnprocessableEntity("Please enter a valid JSON.")
 
     @app.route('/get_users', methods=['GET'])
     def handle_get_users():
@@ -29,18 +30,16 @@ def user_routes(app):
 
             user = login(data)
 
-            return {"message": "User logged in successfully.", "token": update_token(user, data)}
+            return update_token(user, data)
         else:
-            raise WrongFormat()
+            raise werkzeug.exceptions.UnprocessableEntity("Please enter a valid JSON.")
 
     @app.route('/logout', methods=['POST'])
     def handle_logout():
 
         user_token = request.headers.get('Authorization')
 
-        remove_token(user_token)
-
-        return {"message": "User logged out successfully."}
+        return remove_token(user_token)
 
     @app.route('/delete_user', methods=['DELETE'])
     def handle_delete_user():
@@ -48,13 +47,12 @@ def user_routes(app):
             user_token = request.headers.get('Authorization')
 
             if not user_token:
-                raise UserNotLoggedIn()
+                raise werkzeug.exceptions.Unauthorized("User not logged in")
 
             user = find_user(user_token)
 
             if not user.is_admin:
-                raise PermissionDenied()
-
-            return delete_user(request), 200
+                raise werkzeug.exceptions.PermissionDenied("User is not admin")
+            return delete_user(request)
         else:
-            raise WrongFormat()
+            raise werkzeug.exceptions.UnprocessableEntity("Please enter a valid JSON.")
